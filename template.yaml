@@ -37,7 +37,7 @@ Resources:
     Description: Creating service role in IAM for AWS Lambda
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub 'leech_surgeon-Execution${Stage}'
+      RoleName: !Sub 'leech_surgeon-Execution${AWS::StackName}'
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
