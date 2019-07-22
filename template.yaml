@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform:
+- AWS::Serverless-2016-10-31
+- AWS::CodeStar
+
+Parameters:
+  ProjectId:
+    Type: String
+    Description: CodeStar projectId used to associate new resources to team members
+  CodeDeployRole:
+    Type: String
+    Description: IAM role to allow AWS CodeDeploy to manage deployment of AWS Lambda functions
+  Stage:
+    Type: String
+    Description: The name for a project pipeline stage, such as Staging or Prod, for which resources are provisioned and deployed.
+    Default: ''
+
+Globals:
+  Function:
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Enabled: true
+      Type: Canary10Percent5Minutes
+      Role: !Ref CodeDeployRole
+
+Resources:
+  Task:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: toll_booth.handler
+      Runtime: python3.7
+      Tracing: Active
+      CodeUri: src/
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+  LambdaExecutionRole:
+    Description: Creating service role in IAM for AWS Lambda
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'leech_surgeon-Execution${Stage}'
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [lambda.amazonaws.com]
+          Action: sts:AssumeRole
+      Path: /
+  RolePolicies:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: !Sub "leech_surgeon-Policy-${StackName}"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "iam:PassRole"
+            Resource: "*"
+          - Effect: "Allow"
+            Action:  "secretsmanager:GetSecretValue"
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+            - "ses:ListTemplates"
+            - "ses:ListCustomVerificationEmailTemplates"
+            - "ses:VerifyEmailIdentity"
+            - "ses:GetIdentityPolicies"
+            - "ses:GetSendQuota"
+            - "ses:DescribeConfigurationSet"
+            - "ses:ListReceiptFilters"
+            - "ses:GetIdentityMailFromDomainAttributes"
+            - "ses:VerifyDomainDkim"
+            - "ses:VerifyDomainIdentity"
+            - "ses:SendEmail"
+            - "ses:ListConfigurationSets"
+            - "ses:SendTemplatedEmail"
+            - "ses:SendCustomVerificationEmail"
+            - "ses:GetIdentityDkimAttributes"
+            - "ses:UpdateTemplate"
+            - "ses:DescribeReceiptRuleSet"
+            - "ses:ListReceiptRuleSets"
+            - "ses:GetTemplate"
+            - "ses:ListIdentities"
+            - "ses:VerifyEmailAddress"
+            - "ses:GetCustomVerificationEmailTemplate"
+            - "ses:SendRawEmail"
+            - "ses:GetSendStatistics"
+            - "ses:SendBounce"
+            - "ses:GetIdentityVerificationAttributes"
+            - "ses:GetIdentityNotificationAttributes"
+            - "ses:ListIdentityPolicies"
+            - "ses:DescribeReceiptRule"
+            - "ses:DescribeActiveReceiptRuleSet"
+            - "ses:GetAccountSendingEnabled"
+            - "ses:SendBulkTemplatedEmail"
+            - "ses:ListVerifiedEmailAddresses"
+            Resource: "*"
+          - Effect: "Allow"
+            Action: "logs:*"
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+              - "xray:PutTraceSegments"
+              - "xray:PutTelemetryRecords"
+              - "xray:GetSamplingRules"
+              - "xray:GetSamplingTargets"
+              - "xray:GetSamplingStatisticSummaries"
+            Resource: "*"
+      Roles:
+        - Ref: LambdaExecutionRole
