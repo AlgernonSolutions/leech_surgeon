@@ -49,7 +49,7 @@ Resources:
   RolePolicies:
     Type: "AWS::IAM::Policy"
     Properties:
-      PolicyName: !Sub "leech_surgeon-Policy-${StackName}"
+      PolicyName: !Sub "leech_surgeon-Policy-${AWS::StackName}"
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
