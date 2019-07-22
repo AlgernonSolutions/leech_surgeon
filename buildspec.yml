@@ -2,13 +2,14 @@ version: 0.2
 
 phases:
   install:
-    commands:
-      - pip install --upgrade awscli
+    runtime-versions:
+     python: 3.7
 
   build:
     commands:
 
       # Use AWS SAM to package the application by using AWS CloudFormation
+      - pip install --upgrade awscli
       - aws cloudformation package --template template.yaml --s3-bucket $S3_BUCKET --output-template template-export.yml
 
       # Do not remove this statement. This command is required for AWS CodeStar projects.
