@@ -9,8 +9,14 @@ phases:
     commands:
 
       # Use AWS SAM to package the application by using AWS CloudFormation
+      - pip install --upgrade pip
       - pip install --upgrade awscli
-      - aws cloudformation package --template template.yaml --s3-bucket $S3_BUCKET --output-template template-export.yml
+      - aws cloudformation package \
+        --template template.yaml \
+        --s3-bucket $S3_BUCKET \
+        --output-template template-export.yml \
+        --parameter-overrides \
+          CodeDeployRole=arn:aws:iam::322652498512:role/service-role/AWSCodePipelineServiceRole-us-east-1-surgeon-prod
 
       # Do not remove this statement. This command is required for AWS CodeStar projects.
       # Update the AWS Partition, AWS Region, account ID and project ID in the project ARN on template-configuration.json file so AWS CloudFormation can tag project resources.
