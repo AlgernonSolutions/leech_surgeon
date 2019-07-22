@@ -7,6 +7,8 @@ Parameters:
   CodeDeployRole:
     Type: String
     Description: IAM role to allow AWS CodeDeploy to manage deployment of AWS Lambda functions
+    Default: 'arn:aws:iam::322652498512:role/service-role/AWSCodePipelineServiceRole-us-east-1-surgeon-prod'
+
   Stage:
     Type: String
     Description: The name for a project pipeline stage, such as Staging or Prod, for which resources are provisioned and deployed.
