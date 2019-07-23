@@ -12,9 +12,15 @@ def id_source():
 
 
 @pytest.fixture
-def mock_credible(stubbed_response, mocked_method):
+def mock_credible_login():
+    first_response = {'SessionCookie': 'some_cookie_value'}
+    return mock_credible('post', [])
+
+
+@pytest.fixture
+def mock_credible(mocked_method, stubbed_responses):
     with patch(getattr(requests, mocked_method)) as mock_request:
-        mock_request.return_value = stubbed_response
+        mock_request.sid_effect = stubbed_responses
         yield mock_request
 
 
