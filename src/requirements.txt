@@ -3,3 +3,4 @@ retrying
 requests
 bs4
 openpyxl
+pytest
