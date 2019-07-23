@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from os import path
 from unittest.mock import MagicMock, patch
 
@@ -7,8 +8,19 @@ import requests
 
 
 @pytest.fixture
+def stored_event_generator():
+    return _read_test_event
+
+
+@pytest.fixture
+def mock_response_generator():
+    return _read_mock_response
+
+
+@pytest.fixture
 def mock_static_json():
     with patch('toll_booth.tasks.credible_fe_tasks.StaticJson') as mock_json:
+        mock_json.for_team_data.return_value = _read_mock_response('team_data')
         yield mock_json
 
 
@@ -70,3 +82,13 @@ def _read_test_event(event_name):
     with open(path.join('test_events', f'{event_name}.json')) as json_file:
         event = json.load(json_file)
         return event
+
+
+def _read_mock_response(event_name):
+    with open(path.join('mock_responses', f'{event_name}.json')) as json_file:
+        event = json.load(json_file)
+        for entry, value in event.items():
+            if 'Date' in entry:
+                event[entry] = datetime.fromisoformat(value)
+        return event
+

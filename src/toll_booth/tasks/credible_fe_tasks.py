@@ -1,6 +1,7 @@
 import logging
 
 from toll_booth.obj import CredibleFrontEndDriver
+from toll_booth.obj import StaticJson
 
 
 def get_productivity_report_data(**kwargs):
@@ -89,8 +90,6 @@ def get_productivity_report_data(**kwargs):
 
 
 def build_clinical_teams(**kwargs):
-    from toll_booth.obj import StaticJson
-
     id_source = kwargs['id_source']
     team_json = StaticJson.for_team_data(id_source)
     teams = team_json['teams']
