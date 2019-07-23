@@ -7,19 +7,34 @@ import requests
 
 
 @pytest.fixture
+def mock_x_ray():
+    with patch('toll_booth.tasks.credible_fe_tasks.xray_recorder') as mock_xray:
+        yield mock_xray
+
+
+@pytest.fixture
+def mock_driver():
+    with patch('toll_booth.tasks.credible_fe_tasks.CredibleFrontEndDriver') as mock_driver:
+        yield mock_driver
+
+
+@pytest.fixture
 def id_source():
     return 'Algernon'
 
 
 @pytest.fixture
 def mock_credible_login():
-    first_response = {'SessionCookie': 'some_cookie_value'}
-    return mock_credible('post', [])
+    with patch('requests.sessions.Session.post') as mock_request:
+        first_response = MagicMock()
+        first_response.json.return_value = {'SessionCookie': 'some_value'}
+        mock_request.side_effect = [first_response, MagicMock()]
+        yield mock_request
 
 
 @pytest.fixture
-def mock_credible(mocked_method, stubbed_responses):
-    with patch(getattr(requests, mocked_method)) as mock_request:
+def mock_login_credentials(mocked_method, stubbed_responses):
+    with patch(getattr(requests.sessions.Session, mocked_method)) as mock_request:
         mock_request.sid_effect = stubbed_responses
         yield mock_request
 

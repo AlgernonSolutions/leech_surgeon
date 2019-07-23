@@ -3,14 +3,12 @@ import logging
 from aws_xray_sdk.core import xray_recorder
 
 from toll_booth.tasks.task import task
+from toll_booth.obj import CredibleFrontEndDriver
 
 
-@xray_recorder.capture('get_productivity_report_data')
-@task('get_productivity_report_data')
+@xray_recorder.capture
 def get_productivity_report_data(**kwargs):
-    from toll_booth.obj import CredibleFrontEndDriver
     from datetime import datetime, timedelta
-
     logging.info(f'called a get_productivity report data, kwargs: {kwargs}')
     credible_date_format = '%m/%d/%Y'
 

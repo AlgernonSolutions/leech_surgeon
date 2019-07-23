@@ -5,8 +5,8 @@ from toll_booth.tasks import credible_fe_tasks
 
 @pytest.mark.tasks
 class TestTasks:
-    def test_get_productivity_report_data(self, mock_context):
-        event = {}
+    def test_get_productivity_report_data(self, id_source, mock_driver, mock_x_ray, mock_context):
+        event = {'id_source': id_source}
         results = credible_fe_tasks.get_productivity_report_data(event, mock_context)
         assert results
 
