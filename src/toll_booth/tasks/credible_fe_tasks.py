@@ -1,12 +1,8 @@
 import logging
 
-from aws_xray_sdk.core import xray_recorder
-
-from toll_booth.tasks.task import task
 from toll_booth.obj import CredibleFrontEndDriver
 
 
-@xray_recorder.capture
 def get_productivity_report_data(**kwargs):
     from datetime import datetime, timedelta
     logging.info(f'called a get_productivity report data, kwargs: {kwargs}')
@@ -92,8 +88,6 @@ def get_productivity_report_data(**kwargs):
     return results
 
 
-@xray_recorder.capture('build_clinical_teams')
-@task('build_clinical_teams')
 def build_clinical_teams(**kwargs):
     from toll_booth.obj import StaticJson
 
@@ -131,8 +125,6 @@ def build_clinical_teams(**kwargs):
     return {'teams': teams}
 
 
-@xray_recorder.capture('build_daily_report')
-@task('build_daily_report')
 def build_daily_report(**kwargs):
     import re
     from decimal import Decimal
@@ -191,8 +183,6 @@ def build_daily_report(**kwargs):
     return {'report_data': daily_report}
 
 
-@xray_recorder.capture('build_clinical_caseloads')
-@task('build_clinical_caseloads')
 def build_clinical_caseloads(**kwargs):
     caseloads = {}
     unassigned = []
@@ -266,8 +256,6 @@ def build_clinical_caseloads(**kwargs):
     return {'caseloads': caseloads}
 
 
-@xray_recorder.capture('write_report_data')
-@task('write_report_data')
 def write_report_data(**kwargs):
     from openpyxl import Workbook
     from openpyxl.styles import Font
@@ -312,8 +300,6 @@ def write_report_data(**kwargs):
     return {'download_link': download_link}
 
 
-@xray_recorder.capture('send_report')
-@task('send_report')
 def send_report(**kwargs):
     from toll_booth.obj import StaticJson
 

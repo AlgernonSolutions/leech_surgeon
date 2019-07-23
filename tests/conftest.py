@@ -7,9 +7,9 @@ import requests
 
 
 @pytest.fixture
-def mock_x_ray():
-    with patch('toll_booth.tasks.credible_fe_tasks.xray_recorder') as mock_xray:
-        yield mock_xray
+def mock_static_json():
+    with patch('toll_booth.tasks.credible_fe_tasks.StaticJson') as mock_json:
+        yield mock_json
 
 
 @pytest.fixture

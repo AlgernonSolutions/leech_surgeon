@@ -5,12 +5,13 @@ from toll_booth.tasks import credible_fe_tasks
 
 @pytest.mark.tasks
 class TestTasks:
-    def test_get_productivity_report_data(self, id_source, mock_driver, mock_x_ray, mock_context):
+    def test_get_productivity_report_data(self, id_source, mock_driver):
         event = {'id_source': id_source}
-        results = credible_fe_tasks.get_productivity_report_data(event, mock_context)
+        results = credible_fe_tasks.get_productivity_report_data(**event)
         assert results
 
-    def test_build_clinical_teams(self, mock_context):
+    def test_build_clinical_teams(self, id_source):
+        event = {'id_source': id_source}
         pass
 
     def test_build_daily_report(self, mock_context):

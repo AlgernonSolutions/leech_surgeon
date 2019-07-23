@@ -16,6 +16,8 @@ def handler(event, context):
         credible_fe_tasks.send_report
     ]
     for task in tasks:
+        xray_recorder.begin_subsegment(task.__name__)
         task_data = task(**event)
         event.update(task_data)
+        xray_recorder.end_subsegment()
     return True
