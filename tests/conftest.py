@@ -7,6 +7,14 @@ import pytest
 import requests
 
 
+@pytest.fixture(autouse=True)
+def silence_x_ray():
+    x_ray_patch_all = 'algernon.aws.lambda_logging.patch_all'
+    patch(x_ray_patch_all).start()
+    yield
+    patch.stopall()
+
+
 @pytest.fixture
 def stored_event_generator():
     return _read_test_event

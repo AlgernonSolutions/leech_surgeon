@@ -210,6 +210,10 @@ class CredibleFrontEndDriver:
     def session(self):
         return self._session
 
+    @property
+    def id_source(self):
+        return self._id_source
+
     @_login_required
     def process_advanced_search(self, id_type, selected_fields, start_date=None, end_date=None):
         credible_date_format = '%m/%d/%Y'
@@ -243,6 +247,18 @@ class CredibleFrontEndDriver:
         return encounter
 
     @_login_required
+    def retrieve_client_encounters(self, encounter_ids):
+        url = _base_stem + '/visit/clientvisit_viewall.asp'
+        response = self._session.get(url, data={'clientvisit_ids': encounter_ids})
+        if response.status_code != 200:
+            raise RuntimeError(f'could not get the encounter data for {encounter_ids}, '
+                               f'response code: {response.status_code}')
+        encounters = response.text
+        if '<title>ConsumerService Multi-View</title>' not in encounters:
+            raise RuntimeError(f'something is wrong with this extracted encounters: {encounters}, do not pass it on')
+        return encounters
+
+    @_login_required
     def retrieve_client_encounter_version(self, encounter_id, version_id):
         url = _base_stem + _url_stems['ViewVersions']
         data = {
@@ -263,3 +279,34 @@ class CredibleFrontEndDriver:
             raise RuntimeError(f'could not get the version data for {encounter_id}, '
                                f'response code: {response.status_code}')
         return ajson.loads(response.text)['data']
+
+    @_login_required
+    def list_client_attachments(self, client_id):
+        url = _base_stem + '/client/files.aspx'
+        data = {'client_id': client_id}
+        response = self._session.get(url, data=data, verify=False)
+        if response.status_code != 200:
+            raise RuntimeError(f'could not get the attachments for {client_id}, '
+                               f'response code: {response.status_code}')
+        attachments = response.text
+        if 'FILE ATTACHMENTS' not in attachments:
+            raise RuntimeError(f'something is wrong with this extracted attachments: {attachments}, do not pass it on')
+        return attachments
+
+    @_login_required
+    def download_client_attachment(self, download_link):
+        url = _base_stem + download_link
+        return self._session.get(url)
+
+    @_login_required
+    def get_client_profile(self, client_id):
+        url = _base_stem + '/client/client_view.asp'
+        data = {'client_id': client_id}
+        response = self._session.get(url, data=data, verify=False)
+        if response.status_code != 200:
+            raise RuntimeError(f'could not get the profile for {client_id}, '
+                               f'response code: {response.status_code}')
+        profile = response.text
+        if 'Consumer Info' not in profile:
+            raise RuntimeError(f'something is wrong with this extracted profile: {profile}, do not pass it on')
+        return profile
