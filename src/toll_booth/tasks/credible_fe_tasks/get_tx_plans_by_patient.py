@@ -1,0 +1,23 @@
+def get_tx_plans_by_patient(driver, patient_id):
+    search_data = {
+        'clientvisit_id': 1,
+        'service_type': 1,
+        'non_billable': 3,
+        'consumer_name': 1,
+        'staff_name': 1,
+        'client_int_id': 1,
+        'emp_int_id': 1,
+        'visittype': 1,
+        'orig_rate_amount': 1,
+        'timein': 1,
+        'data_dict_ids': [3, 4, 6, 70, 74, 83, 86, 87, 218, 641],
+        'non_billable1': 0,
+        'wh_fld1': 'cv.client_id',
+        'wh_cmp1': '=',
+        'wh_val1': patient_id,
+        'auth_number': 1,
+        'location_code': 1,
+        'recipient_code': 1,
+        'visittype_id': 3
+    }
+    return driver.process_advanced_search('ClientVisit', search_data)
