@@ -1,6 +1,14 @@
-def check_for_hotwords(question_text, hotwords):
+from toll_booth.obj.inspector import InspectionFinding
+
+
+def check_for_hotwords(**kwargs):
+    hotwords = kwargs['clinical_hotwords']
+    encounter = kwargs['test_encounter']
     results = []
     for word in hotwords:
-        if word in question_text:
+        if word in encounter:
             results.append(word)
-    return results
+    if results:
+        msg = f'clinical hotwords found in documentation'
+        return InspectionFinding('clinical_hotwords', msg, {'hot_words': results})
+    return []

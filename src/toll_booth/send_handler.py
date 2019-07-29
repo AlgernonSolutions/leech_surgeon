@@ -1,11 +1,35 @@
 import logging
 import os
 
+from algernon import rebuild_event
 from algernon.aws import lambda_logged
 import boto3
 
+from toll_booth.obj.reports import ReportData
+from toll_booth.tasks.s3_tasks import retrieve_stored_engine_data
+from toll_booth.tasks.write_report_data import write_report_data
 
-def _send_by_ses(recipients, subject_line, html_body, text_body):
+
+def _send_by_ses(recipient, subject_line, html_body, text_body):
+    client = boto3.client('ses')
+    response = client.send_email(
+        Source='algernon@algernon.solutions',
+        Destination={
+            'ToAddresses': recipient['email_address']
+        },
+        Message={
+            'Subject': {'Data': subject_line},
+            'Body': {
+                'Text': {'Data': text_body},
+                'Html': {'Data': html_body}
+            }
+        },
+        ReplyToAddresses=['algernon@algernon.solutions']
+    )
+    return response
+
+
+def _batch_send_by_ses(recipients, subject_line, html_body, text_body):
     client = boto3.client('ses')
     response = client.send_email(
         Source='algernon@algernon.solutions',
@@ -86,20 +110,65 @@ def _retrieve_report_recipients(id_source, table_name):
     resource = boto3.resource('dynamodb')
     table = resource.Table(table_name)
     identifier = '#report_recipients#'
-    return table.get_item(Key={'identifier': identifier, 'sid_value': id_source})
+    response = table.get_item(Key={'identifier_stem': identifier, 'sid_value': id_source})
+    return [x for x in response['Item']['recipients']]
+
+
+def _generate_base_report(id_source, bucket_name):
+    report_data = retrieve_stored_engine_data(bucket_name, id_source, 'built_reports')
+    report_data = rebuild_event(report_data)
+    return {x: ReportData.from_stored_data(x, y) for x, y in report_data.items()}
+
+
+def _supervisor_filter(row_entry, supervisor_last_name):
+    return row_entry['team_name'] == supervisor_last_name
+
+
+def _csw_filter(row_entry, csw_last_name, csw_first_name):
+    return row_entry['csw_name'] == f'{csw_last_name}, {csw_first_name}'
+
+
+def _generate_individual_report(recipient, base_report):
+    non_filtered = ['unassigned']
+    report_role = recipient['role']
+    last_name = recipient['last_name']
+    first_name = recipient['first_name']
+    report_data = {}
+    for entry_name, report_entry in base_report.items():
+        if entry_name in non_filtered:
+            if report_role != 'all':
+                continue
+            report_data[entry_name] = report_entry
+            continue
+        if report_role == 'supervisor':
+            report_data[entry_name] = report_entry.line_item_filter(_supervisor_filter, (last_name,))
+            continue
+        if report_role == 'csw':
+            report_data[entry_name] = report_entry.line_item_filter(_csw_filter, (last_name, first_name))
+            continue
+        report_data[entry_name] = report_entry
+    return report_data
 
 
 @lambda_logged
 def send_handler(event, context):
+    results = []
     logging.info(f'received a call to run send_report: {event}/{context}')
     subject_line = 'Algernon Solutions Clinical Intelligence Report'
-    download_link = event['download_link']
     id_source = event['id_source']
-    table_name = os.environ['CLIENT_DATA_TABLE']
+    table_name = os.environ['CLIENT_DATA_TABLE_NAME']
+    bucket_name = os.environ['LEECH_BUCKET']
+    base_report = _generate_base_report(id_source, bucket_name)
     recipients = _retrieve_report_recipients(id_source, table_name)
-    text_body = _generate_text_body(download_link)
-    html_body = _generate_html_body(download_link)
-    response = _send_by_ses(recipients['recipients'],subject_line, html_body, text_body)
-    results = {'message_id': response['MessageId'], 'text_body': text_body, 'html_body': html_body}
+    for recipient in recipients:
+        recipient_report = _generate_individual_report(recipient, base_report)
+        report_name = f'daily_report_{recipient["last_name"]}_{recipient["first_name"]}'
+        download_link = write_report_data(
+            report_name=report_name, id_source=id_source, report_data=recipient_report)
+        text_body = _generate_text_body(download_link)
+        html_body = _generate_html_body(download_link)
+        response = _send_by_ses(recipient, subject_line, html_body, text_body)
+        result = {'message_id': response['MessageId'], 'download_link': download_link, 'recipient': recipient}
+        results.append(result)
     logging.info(f'completed a call to run send_report: {event}/{results}')
     return results

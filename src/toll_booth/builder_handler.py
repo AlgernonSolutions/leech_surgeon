@@ -69,7 +69,38 @@ def _build_audit_results(id_source, teams, caseloads, daily_data, old_encounters
     for team_name, team in teams.items():
         for entry in team:
             inverted_teams[str(entry['emp_id'])] = (team_name, f"{entry['last_name']}, {entry['first_name']}")
-    return audit_tasks.format_audit_results(inverted_teams, patients, audit_results)
+    return building_tasks.build_audit_results(inverted_teams, patients, audit_results)
+
+
+def _build_30_60_90_report(caseloads, encounters):
+    report = {}
+    base_report = building_tasks.build_not_seen_report(caseloads, encounters)
+    for entry in base_report:
+        team_name = entry['team_name']
+        csw_name = entry['csw_name']
+        if team_name not in report:
+            report[team_name] = {}
+        if csw_name not in report[team_name]:
+            report[team_name][csw_name] = []
+        report[team_name][csw_name].append(entry)
+    return report
+
+
+def _build_productivity_report(caseloads, encounters, unapproved):
+    report = {}
+    for team_name, employees in caseloads.items():
+        if team_name == 'unassigned':
+            continue
+        page_name = f'productivity_{team_name}'
+        productivity_results = building_tasks.build_team_productivity(team_name, employees, encounters, unapproved)
+        report[page_name] = productivity_results
+    return report
+
+
+def _store_final_product(bucket_name, id_source, engine_data):
+    file_key = s3_tasks.build_engine_file_key('built_reports', id_source)
+    if not s3_tasks.check_for_engine_data(bucket_name, file_key):
+        s3_tasks.store_engine_data(bucket_name, file_key, engine_data)
 
 
 @lambda_logged
@@ -89,22 +120,18 @@ def builder_handler(event, context):
     unapproved = _build_unapproved_data(daily_data)
     tx_plans = _build_tx_plan_data(daily_data)
     diagnostics = _build_da_data(daily_data)
-    for team_name, employees in caseloads.items():
-        if team_name == 'unassigned':
-            continue
-        page_name = f'productivity_{team_name}'
-        productivity_results = building_tasks.build_team_productivity(employees, encounters, unapproved)
-        daily_report[page_name] = productivity_results
+    productivity = _build_productivity_report(caseloads, encounters, unapproved)
     tx_report = building_tasks.build_expiration_report(caseloads, tx_plans, 180)
-    da_report = building_tasks.build_expiration_report(caseloads, diagnostics, 180)
-    thirty_sixty_ninety = building_tasks.build_not_seen_report(caseloads, encounters)
+    da_report = building_tasks.build_expiration_report(caseloads, diagnostics, 365)
+    thirty_sixty_ninety = _build_30_60_90_report(caseloads, encounters)
     unassigned_report = building_tasks.build_unassigned_report(caseloads)
     audit_results = _build_audit_results(id_source, teams, caseloads, daily_data, old_encounters)
-    return {
+    built_report = {
         'tx_report': tx_report,
         'da_report': da_report,
         '30_60_90': thirty_sixty_ninety,
         'unassigned': unassigned_report,
-        'audit': audit_results
+        'audit': audit_results,
+        'productivity': productivity
     }
-
+    _store_final_product(bucket_name, id_source, built_report)

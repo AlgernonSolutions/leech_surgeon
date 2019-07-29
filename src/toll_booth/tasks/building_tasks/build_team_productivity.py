@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 
-def build_team_productivity(team_caseload, encounters, unapproved):
+def build_team_productivity(team_name, team_caseload, encounters, unapproved):
     results = []
     twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
     six_days_ago = datetime.now() - timedelta(days=6)
@@ -18,22 +18,11 @@ def build_team_productivity(team_caseload, encounters, unapproved):
         emp_productivity = {
             'csw_id': emp_id,
             'csw_name':  f'{employee["last_name"]}, {employee["first_name"]}',
-            'past_one_day':  {
-                'total': sum([x['base_rate'] for x in emp_past_day_encounters]),
-                'detailed': emp_past_day_encounters
-            },
-            'past_six_days': {
-                'total': sum([x['base_rate'] for x in emp_next_six_days_encounters]),
-                'detailed': emp_next_six_days_encounters
-            },
-            'unapproved': {
-                'total': sum([x['base_rate'] for x in emp_unapproved]),
-                'detailed': emp_unapproved
-            },
-            'red_x': {
-                'total': sum([x['base_rate'] for x in emp_red_x]),
-                'detailed': emp_red_x
-            }
+            'team_name': team_name,
+            'past_one_day':  sum([x['base_rate'] for x in emp_past_day_encounters]),
+            'past_six_days': sum([x['base_rate'] for x in emp_next_six_days_encounters]),
+            'unapproved': sum([x['base_rate'] for x in emp_unapproved]),
+            'red_x': sum([x['base_rate'] for x in emp_red_x])
         }
         results.append(emp_productivity)
     return results

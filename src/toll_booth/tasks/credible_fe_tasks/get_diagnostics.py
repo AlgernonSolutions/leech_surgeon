@@ -2,7 +2,7 @@ def get_diagnostics(driver, earliest_encounter_date, today):
     search_data = {
         'clientvisit_id': 1,
         'service_type': 1,
-        'non_billable': 1,
+        'non_billable': 3,
         'consumer_name': 1,
         'staff_name': 1,
         'client_int_id': 1,

@@ -26,9 +26,10 @@ def build_not_seen_report(caseloads, encounter_data):
             x for x in encounter_data if int(x['client_id']) == int(client_id) and x['non_billable'] is False]
         if not client_encounters:
             results.append({
-                'team': team,
+                'team_name': team,
                 'csw_name': csw_name,
                 'client_id': client_id,
+                'client_name': f'{assignments["last_name"]}, {assignments["first_name"]}',
                 'last_service_by_csw': '?',
                 'last_bill_service': '?',
                 '30_60_90_by_csw': '90',
@@ -40,9 +41,10 @@ def build_not_seen_report(caseloads, encounter_data):
         csw_encounters = [x for x in client_encounters if int(x['emp_id']) == int(csw_id)]
         if not csw_encounters:
             results.append({
-                'team': team,
+                'team_name': team,
                 'csw_name': csw_name,
                 'client_id': client_id,
+                'client_name': f'{assignments["last_name"]}, {assignments["first_name"]}',
                 'last_service_by_csw': '?',
                 'last_bill_service': max_encounter_date,
                 '30_60_90_by_csw': '90',
@@ -52,9 +54,10 @@ def build_not_seen_report(caseloads, encounter_data):
         max_csw_date = max([x['rev_timeout'] for x in csw_encounters])
         per_csw = _calculate_thirty_sixty_ninety(today, max_csw_date)
         results.append({
-            'team': team,
+            'team_name': team,
             'csw_name': csw_name,
             'client_id': client_id,
+            'client_name': f'{assignments["last_name"]}, {assignments["first_name"]}',
             'last_service_by_csw': max_csw_date,
             'last_bill_service': max_encounter_date,
             '30_60_90_by_csw': per_csw,
