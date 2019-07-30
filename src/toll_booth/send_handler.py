@@ -168,7 +168,7 @@ def send_handler(event, context):
         text_body = _generate_text_body(download_link)
         html_body = _generate_html_body(download_link)
         response = _send_by_ses(recipient, subject_line, html_body, text_body)
-        result = {'message_id': response['MessageId'], 'download_link': download_link, 'recipient': recipient}
+        result = {'message_id': response['MessageId'], 'download_link': str(download_link), 'recipient': recipient}
         results.append(result)
     logging.info(f'completed a call to run send_report: {event}/{results}')
     return results
