@@ -15,7 +15,7 @@ def _send_by_ses(recipient, subject_line, html_body, text_body):
     response = client.send_email(
         Source='algernon@algernon.solutions',
         Destination={
-            'ToAddresses': recipient['email_address']
+            'ToAddresses': [recipient['email_address']]
         },
         Message={
             'Subject': {'Data': subject_line},

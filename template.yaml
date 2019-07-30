@@ -28,7 +28,7 @@ Resources:
   BuildTask:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: toll_booth.build_handler
+      Handler: toll_booth.builder_handler
       Runtime: python3.7
       Tracing: Active
       CodeUri: src/
