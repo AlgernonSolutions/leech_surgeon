@@ -63,4 +63,5 @@ def build_not_seen_report(caseloads, encounter_data):
             '30_60_90_by_csw': per_csw,
             '30_60_90_by_last_billed': per_billable
         })
-    return results
+    filtered_results = [x for x in results if x['30_60_90_by_csw'] != '30']
+    return filtered_results
