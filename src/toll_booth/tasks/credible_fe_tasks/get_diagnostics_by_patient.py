@@ -2,7 +2,7 @@ def get_diagnostics_by_patient(driver, patient_id):
     search_data = {
         'clientvisit_id': 1,
         'service_type': 1,
-        'non_billable': 3,
+        'non_billable': 1,
         'consumer_name': 1,
         'staff_name': 1,
         'client_int_id': 1,
@@ -11,7 +11,7 @@ def get_diagnostics_by_patient(driver, patient_id):
         'orig_rate_amount': 1,
         'timein': 1,
         'data_dict_ids': [3, 4, 6, 70, 74, 83, 86, 87, 218, 641],
-        'non_billable1': 0,
+        'non_billable1': 3,
         'wh_fld1': 'cv.client_id',
         'wh_cmp1': '=',
         'wh_val1': patient_id,

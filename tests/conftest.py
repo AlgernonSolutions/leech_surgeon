@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
+from toll_booth.obj import CredibleFrontEndDriver
+
 
 @pytest.fixture(autouse=True)
 def silence_x_ray():
@@ -30,6 +32,20 @@ def mock_static_json():
     with patch('toll_booth.tasks.credible_fe_tasks.StaticJson') as mock_json:
         mock_json.for_team_data.return_value = _read_mock_response('team_data')
         yield mock_json
+
+
+@pytest.fixture(scope='module')
+def credible_driver_generator():
+    def _generate_driver(id_source):
+        driver = CredibleFrontEndDriver(id_source)
+        return driver
+    return _generate_driver
+
+
+@pytest.fixture(scope='module')
+def psi_credible_driver():
+    driver = CredibleFrontEndDriver('PSI')
+    return driver
 
 
 @pytest.fixture
