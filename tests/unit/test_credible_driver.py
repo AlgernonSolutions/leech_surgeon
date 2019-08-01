@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from toll_booth.obj.incredible.credible_fe import CredibleLoginCredentials, CredibleFrontEndDriver
+from toll_booth.obj.incredible.credible_fe import CredibleFrontEndDriver
+from toll_booth.obj.incredible.credible_fe_credentials import CredibleLoginCredentials
 
 
 @pytest.mark.credible_credentials

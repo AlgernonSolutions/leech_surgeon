@@ -9,6 +9,7 @@ def build_expiration_report(caseloads, assessment_data, assessment_lifespan):
     now = datetime.now()
     max_assessments = {}
     results = {}
+    # collect all the assessments for each client under the client_id
     for assessment in assessment_data:
         client_id = str(assessment['client_id'])
         if client_id not in max_assessments:
