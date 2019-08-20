@@ -7,6 +7,15 @@ from decimal import Decimal
 import pytz
 
 
+def _fix_unescaped_quotes(csv_string):
+    pattern = re.compile(r'"(.+)"')
+    results = pattern.findall(csv_string)
+    for entry in results:
+        escaped = entry.replace('"', "'")
+        csv_string = csv_string.replace(entry, escaped)
+    return csv_string
+
+
 class CredibleCsvParser:
     _field_value_maps = {
         'Date': 'datetime',
@@ -28,7 +37,7 @@ class CredibleCsvParser:
             response = {}
         header = []
         first = True
-        escaped = re.sub(r'(?<!^)(?<!,)"(?!,|$)', "'", csv_string)
+        escaped = _fix_unescaped_quotes(csv_string)
         with io.StringIO(escaped, newline='\r\n') as io_string:
             reader = csv.reader(io_string)
             for row in reader:
