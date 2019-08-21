@@ -8,7 +8,7 @@ import pytz
 
 
 def _fix_unescaped_quotes(csv_string):
-    pattern = re.compile(r'"(.+)"')
+    pattern = re.compile(r'(?!.*\",\".*)\"(.+)\"')
     results = pattern.findall(csv_string)
     for entry in results:
         escaped = entry.replace('"', "'")
