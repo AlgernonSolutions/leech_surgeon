@@ -10,7 +10,7 @@ def get_unapproved_encounters(driver, earliest_encounter_date, today):
         'visittype': 1,
         'orig_rate_amount': 1,
         'timein': 1,
-        'data_dict_ids': [3, 4, 6, 70, 74, 83, 86, 87, 218, 641],
+        'data_dict_ids': [3, 4, 6, 70, 83, 86, 87, 218, 641, 74],
         'non_billable1': 0,
         'show_unappr': 1,
         'wh_fld1': 'cv.appr',

@@ -10,7 +10,7 @@ class TestTasks:
     @pytest.mark.engine_i
     def test_engine_handler(self, mock_context):
         id_source = 'ICFS'
-        os.environ['LEECH_BUCKET'] = 'algernonsolutions-leech-dev'
+        os.environ['LEECH_BUCKET'] = 'surgeon-asset-bucket-surgeon'
         event = {'id_source': id_source}
         results = engine_handler(event, mock_context)
         assert results

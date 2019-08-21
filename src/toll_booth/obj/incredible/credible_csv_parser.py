@@ -8,12 +8,9 @@ import pytz
 
 
 def _fix_unescaped_quotes(csv_string):
-    pattern = re.compile(r'(?!.*\",\".*)\"(.+)\"')
-    results = pattern.findall(csv_string)
-    for entry in results:
-        escaped = entry.replace('"', "'")
-        csv_string = csv_string.replace(entry, escaped)
-    return csv_string
+    escaped = re.sub(r'(,) +', '\\, ', csv_string)
+    return escaped
+
 
 
 class CredibleCsvParser:
@@ -37,17 +34,51 @@ class CredibleCsvParser:
             response = {}
         header = []
         first = True
-        escaped = _fix_unescaped_quotes(csv_string)
-        with io.StringIO(escaped, newline='\r\n') as io_string:
-            reader = csv.reader(io_string)
-            for row in reader:
-                header_index = 0
-                row_entry = {}
+        with io.StringIO(csv_string, newline='\r\n') as io_string:
+            reader = csv.reader(io_string, escapechar='\\')
+            lines = csv_string.split('\r\n')
+            for row_number, row in enumerate(reader):
                 if first:
                     for entry in row:
                         header.append(entry)
                     first = False
                     continue
+                row_entry = cls._parse_row(header, row_number, row, lines)
+                if key_name:
+                    key_value = row_entry[key_name]
+                    response[key_value] = row_entry
+                    continue
+                response.append(row_entry)
+        return response
+
+    @classmethod
+    def _parse_row(cls, header, row_number, row, lines):
+        header_index = 0
+        row_entry = {}
+        if len(row) > len(header):
+            problem_line = lines[row_number]
+            return cls._resolve_unescaped_line(header, problem_line)
+        for entry in row:
+            try:
+                header_name = header[header_index]
+            except IndexError:
+                raise RuntimeError(
+                    'the returned data from a csv query contained insufficient information to create the table')
+            entry = cls._set_data_type(header_name, entry)
+            row_entry[header_name] = entry
+            header_index += 1
+        if len(row_entry) != len(header):
+            print()
+        return row_entry
+
+    @classmethod
+    def _resolve_unescaped_line(cls, header, problem_line):
+        row_entry = {}
+        header_index = 0
+        escaped = _fix_unescaped_quotes(problem_line)
+        with io.StringIO(escaped, newline='\r\n') as io_string:
+            reader = csv.reader(io_string, escapechar='\\')
+            for row in reader:
                 for entry in row:
                     try:
                         header_name = header[header_index]
@@ -57,12 +88,7 @@ class CredibleCsvParser:
                     entry = cls._set_data_type(header_name, entry)
                     row_entry[header_name] = entry
                     header_index += 1
-                if key_name:
-                    key_value = row_entry[key_name]
-                    response[key_value] = row_entry
-                    continue
-                response.append(row_entry)
-        return response
+            return row_entry
 
     @classmethod
     def _set_data_type(cls, header_name, entry):
