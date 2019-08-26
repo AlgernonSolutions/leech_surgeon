@@ -9,7 +9,7 @@ from toll_booth import engine_handler, builder_handler, send_handler
 class TestTasks:
     @pytest.mark.engine_i
     def test_engine_handler(self, mock_context):
-        id_source = 'ICFS'
+        id_source = 'PSI'
         os.environ['LEECH_BUCKET'] = 'surgeon-asset-bucket-surgeon'
         event = {'id_source': id_source}
         results = engine_handler(event, mock_context)
@@ -17,7 +17,7 @@ class TestTasks:
 
     @pytest.mark.build_i
     def test_builder_handler(self, mock_context):
-        id_source = 'ICFS'
+        id_source = 'PSI'
         os.environ['LEECH_BUCKET'] = 'surgeon-asset-bucket-surgeon'
         os.environ['CLIENT_DATA_TABLE_NAME'] = 'ClientData'
         event = {'id_source': id_source}

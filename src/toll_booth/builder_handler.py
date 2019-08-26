@@ -112,6 +112,7 @@ def builder_handler(event, context):
     client_data_table_name = os.environ['CLIENT_DATA_TABLE_NAME']
     daily_data = s3_tasks.retrieve_stored_engine_data(bucket_name, id_source, 'daily_data')
     daily_data = rebuild_event(daily_data)
+    client_data = daily_data['client_data']
     old_encounters = s3_tasks.retrieve_stored_engine_data(bucket_name, id_source, 'old_encounters')
     old_encounters = rebuild_event(old_encounters)
     teams = _build_teams(id_source, daily_data)
@@ -121,8 +122,8 @@ def builder_handler(event, context):
     tx_plans = _build_tx_plan_data(daily_data)
     diagnostics = _build_da_data(daily_data)
     productivity = _build_productivity_report(caseloads, encounters, unapproved)
-    tx_report = building_tasks.build_expiration_report(caseloads, tx_plans, 180)
-    da_report = building_tasks.build_expiration_report(caseloads, diagnostics, 365)
+    tx_report = building_tasks.build_expiration_report(caseloads, tx_plans, client_data,  180)
+    da_report = building_tasks.build_expiration_report(caseloads, diagnostics, client_data, 365)
     thirty_sixty_ninety = _build_30_60_90_report(caseloads, encounters)
     unassigned_report = building_tasks.build_unassigned_report(caseloads)
     audit_results = _build_audit_results(id_source, teams, caseloads, daily_data, old_encounters)

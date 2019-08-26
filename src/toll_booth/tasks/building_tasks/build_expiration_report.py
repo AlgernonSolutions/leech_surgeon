@@ -3,7 +3,16 @@ from datetime import timedelta, datetime
 from toll_booth.tasks.building_tasks.invert_caseloads import invert_caseloads
 
 
-def build_expiration_report(caseloads, assessment_data, assessment_lifespan):
+def _search_client_data(client_data, client_id, default=None):
+    for entry in client_data:
+        if entry[' Id'] == client_id:
+            return entry
+    if default:
+        return default
+    raise RuntimeError(f'could not find client record for {client_id}')
+
+
+def build_expiration_report(caseloads, assessment_data, client_data, assessment_lifespan):
     lifespan_delta = timedelta(days=assessment_lifespan)
     inverted = invert_caseloads(caseloads)
     now = datetime.now()
@@ -29,11 +38,17 @@ def build_expiration_report(caseloads, assessment_data, assessment_lifespan):
             results[team_name] = {}
         if csw_name not in results[team_name]:
             results[team_name][csw_name] = []
+        try:
+            client_name = f'{assignments["last_name"]}, {assignments["first_name"]}'
+        except KeyError:
+            default = {'last_name': 'UNKNOWN', 'first_name': 'UNKNOWN'}
+            client_data_entry = _search_client_data(client_data, client_id, default)
+            client_name = f'{client_data_entry["last_name"]}, {client_data_entry["first_name"]}'
         results[team_name][csw_name].append({
             'team_name': team_name,
             'csw_name': csw_name,
             'client_id': client_id,
-            'client_name': f'{assignments["last_name"]}, {assignments["first_name"]}',
+            'client_name': client_name,
             'start_date': max_assessment_date,
             'end_date': expiration_date,
             'is_expired': expired,
