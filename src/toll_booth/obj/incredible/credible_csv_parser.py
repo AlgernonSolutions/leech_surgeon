@@ -11,6 +11,7 @@ class CredibleCsvParser:
     _field_value_maps = {
         'Date': 'datetime',
         'Service Date': 'date',
+        'DOB': 'utc_datetime',
         'Time In': 'datetime',
         'Time Out': 'datetime',
         'Service ID': 'number',
@@ -21,8 +22,11 @@ class CredibleCsvParser:
         'Approved Date': 'datetime'
     }
 
-    @classmethod
-    def parse_csv_response(cls, csv_string, key_name=None):
+    def __init__(self, id_source, id_source_tz: pytz.timezone):
+        self._id_source = id_source
+        self._id_source_tz = id_source_tz
+
+    def parse_csv_response(self, csv_string, key_name=None):
         response = []
         if key_name:
             response = {}
@@ -36,7 +40,8 @@ class CredibleCsvParser:
                 row_entry = {}
                 if first:
                     for entry in row:
-                        header.append(entry)
+                        if entry not in header:
+                            header.append(entry)
                     first = False
                     continue
                 for entry in row:
@@ -45,7 +50,7 @@ class CredibleCsvParser:
                     except IndexError:
                         raise RuntimeError(
                             'the returned data from a csv query contained insufficient information to create the table')
-                    entry = cls._set_data_type(header_name, entry)
+                    entry = self._set_data_type(header_name, entry)
                     row_entry[header_name] = entry
                     header_index += 1
                 if key_name:
@@ -55,21 +60,23 @@ class CredibleCsvParser:
                 response.append(row_entry)
         return response
 
-    @classmethod
-    def _set_data_type(cls, header_name, entry):
-        data_type = cls._field_value_maps.get(header_name, 'string')
+    def _set_data_type(self, header_name, entry):
+        data_type = self._field_value_maps.get(header_name, 'string')
         if not entry:
             return None
         if data_type == 'string':
             entry = str(entry)
         if data_type == 'datetime':
             try:
-                entry = datetime.datetime.strptime(entry, '%m/%d/%Y %I:%M:%S %p')
+                naive_entry = datetime.datetime.strptime(entry, '%m/%d/%Y %I:%M:%S %p')
             except ValueError:
                 entry = f'{entry} 12:00:00 AM'
-                entry = datetime.datetime.strptime(entry, '%m/%d/%Y %I:%M:%S %p')
+                naive_entry = datetime.datetime.strptime(entry, '%m/%d/%Y %I:%M:%S %p')
+            local_tz_entry = self._id_source_tz.localize(naive_entry)
+            entry = local_tz_entry.astimezone(pytz.UTC)
         if data_type == 'date':
-            entry = datetime.datetime.strptime(entry, '%m/%d/%Y')
+            naive_entry = datetime.datetime.strptime(entry, '%m/%d/%Y')
+            entry = pytz.UTC.localize(naive_entry)
         if data_type == 'utc_datetime':
             try:
                 entry = datetime.datetime.strptime(entry, '%m/%d/%Y %I:%M:%S %p')

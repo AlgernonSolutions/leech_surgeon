@@ -1,26 +1,35 @@
 import os
 
 import boto3
+from algernon import AlgObject
 from botocore.exceptions import ClientError
 
 
-class ClinicalHotword:
+class ClinicalHotword(AlgObject):
     def __init__(self, word_category, world_value):
-        self._world_category = word_category
+        self._word_category = word_category
         self._word_value = world_value
+
+    @classmethod
+    def parse_json(cls, json_dict):
+        return cls(json_dict['word_category'], json_dict['word_value'])
 
     @property
     def word_category(self):
-        return self._world_category
+        return self._word_category
 
     @property
     def word_value(self):
         return self._word_value
 
 
-class ClinicalHotwords:
+class ClinicalHotwords(AlgObject):
     def __init__(self, hotwords):
         self._hotwords = hotwords
+
+    @classmethod
+    def parse_json(cls, json_dict):
+        return cls(json_dict['hotwords'])
 
     @classmethod
     def retrieve(cls, id_source):

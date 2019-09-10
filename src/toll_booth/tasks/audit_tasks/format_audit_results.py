@@ -22,7 +22,10 @@ def _structure_patients(caseloads):
 
 
 def format_audit_results(teams, patients, audit_results):
-    header = ['Encounter ID', 'Provider ID', 'Provider Name', 'Patient ID', 'Patient Name', 'Audit Results']
+    header = [
+        'Encounter ID', 'Encounter Date', 'Provider ID',
+        'Provider Name', 'Patient ID', 'Patient Name', 'Audit Results'
+    ]
     formatted = {}
     for entry in audit_results:
         encounter_id = str(entry.encounter_id)
@@ -38,5 +41,7 @@ def format_audit_results(teams, patients, audit_results):
         if entry.findings:
             findings = '\n'.join(str(x) for x in entry.findings)
         patient_name = patients.get(patient_id, 'unknown')
-        formatted[team_name].append([encounter_id, provider_id, team_data[1], patient_id, patient_name, findings])
+        encounter_datetime_in = entry.encounter_datetime_in
+        formatted[team_name].append(
+            [encounter_id, encounter_datetime_in, provider_id, team_data[1], patient_id, patient_name, findings])
     return formatted

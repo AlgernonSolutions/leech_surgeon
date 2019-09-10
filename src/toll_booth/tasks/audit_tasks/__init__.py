@@ -5,3 +5,6 @@ from toll_booth.tasks.audit_tasks.check_auth import check_auth
 from toll_booth.tasks.audit_tasks.check_duration import check_duration
 from toll_booth.tasks.audit_tasks.check_spacing import check_encounter_spacing
 from toll_booth.tasks.audit_tasks.check_for_hotwords import check_for_hotwords
+from toll_booth.tasks.audit_tasks.check_days_billing import check_days_billing
+from toll_booth.tasks.audit_tasks.check_for_collisions import check_for_collisions
+from toll_booth.tasks.audit_tasks.check_for_clones import check_for_clones

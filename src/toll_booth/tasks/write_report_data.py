@@ -45,7 +45,11 @@ _headers = {
     'productivity': (
         ['Team Name', 'Provider Name', 'Past 24 Hours', 'Next Past Six Days', 'Unapproved', 'Red X'],
         ['team_name', 'csw_name', 'past_one_day', 'past_six_days', 'unapproved', 'red_x']
-    )
+    ),
+    'provider_audit': (
+        ['Encounter ID', 'Encounter Date', 'Provider ID', 'Patient ID', 'Patient Name', 'Audit Results'],
+        ['encounter_id', 'encounter_date', 'provider_id', 'patient_id', 'patient_name', 'findings']
+    ),
 }
 
 

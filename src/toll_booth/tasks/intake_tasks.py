@@ -230,6 +230,6 @@ def get_months_intake(id_source, intake_month_number, intake_year_number=None, *
 
 if __name__ == '__main__':
     test_id_source = 'PSI'
-    test_month = 5
+    test_month = 7
     test_results = get_months_intake(test_id_source, test_month)
     print(test_results)

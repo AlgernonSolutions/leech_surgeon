@@ -4,3 +4,5 @@ requests
 bs4
 openpyxl
 pytest
+elasticsearch-dsl
+requests_aws4auth

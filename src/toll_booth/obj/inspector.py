@@ -1,21 +1,25 @@
+from decimal import Decimal
+
 from algernon import AlgObject
 
 
 class InspectionFindings(AlgObject):
-    def __init__(self, id_source, encounter_id, provider_id, patient_id, findings=None):
+    def __init__(self, id_source, encounter_id, encounter_datetime_in, provider_id, patient_id, patient_name, findings=None):
         if not findings:
             findings = []
         self._id_source = id_source
         self._encounter_id = encounter_id
+        self._encounter_datetime_in = encounter_datetime_in
         self._provider_id = provider_id
         self._patient_id = patient_id
+        self._patient_name = patient_name
         self._findings = findings
 
     @classmethod
     def parse_json(cls, json_dict):
         return cls(
             json_dict['id_source'], json_dict['encounter_id'], json_dict['provider_id'],
-            json_dict['patient_id'], json_dict.get('findings'))
+            json_dict['patient_id'], json_dict['patient_name'],  json_dict.get('findings'))
 
     @property
     def id_source(self):
@@ -26,12 +30,20 @@ class InspectionFindings(AlgObject):
         return self._encounter_id
 
     @property
+    def encounter_datetime_in(self):
+        return self._encounter_datetime_in
+
+    @property
     def provider_id(self):
         return self._provider_id
 
     @property
     def patient_id(self):
         return self._patient_id
+
+    @property
+    def patient_name(self):
+        return self._patient_name
 
     @property
     def findings(self):
@@ -73,12 +85,12 @@ class InspectionFinding(AlgObject):
         return f'{self._finding_message}{_format_details(self.finding_details)}'
 
 
-class InspectionEncounterData:
-    def __init__(self, encounters, encounters_by_date, encounters_by_provider, encounter_by_patient):
+class InspectionEncounterData(AlgObject):
+    def __init__(self, encounters, encounters_by_date, encounters_by_provider, encounters_by_patient):
         self._encounters = encounters
         self._encounters_by_date = encounters_by_date
         self._encounters_by_provider = encounters_by_provider
-        self._encounters_by_patient = encounter_by_patient
+        self._encounters_by_patient = encounters_by_patient
 
     @classmethod
     def from_raw_encounters(cls, raw_encounters):
@@ -103,6 +115,23 @@ class InspectionEncounterData:
             encounters[encounter_id] = encounter
         return cls(encounters, by_date, by_provider, by_patient)
 
+    @classmethod
+    def parse_json(cls, json_dict):
+        encounters = {Decimal(x): y for x, y in json_dict['encounters'].items()}
+        return cls(
+            encounters, json_dict['encounters_by_date'],
+            json_dict['encounters_by_provider'], json_dict['encounters_by_patient'])
+
+    @property
+    def to_json(self):
+        encounters = {float(x): y for x, y in self._encounters.items()}
+        return {
+            '_encounters': encounters,
+            '_encounters_by_date': self._encounters_by_date,
+            '_encounters_by_provider': self._encounters_by_provider,
+            '_encounters_by_patient': self._encounters_by_patient,
+        }
+
     @property
     def encounters_by_date(self):
         return self._encounters_by_date
@@ -119,13 +148,16 @@ class InspectionEncounterData:
         if encounter_id not in self._encounters:
             raise KeyError(encounter_id)
         encounter_date = self._encounters[encounter_id]['Service Date'].isoformat()
-        return self._encounters_by_date[encounter_date]
+        return self.get_same_day_encounters_by_date(encounter_date)
 
     def get_same_day_encounters_by_date(self, encounter_date):
         encounter_date = encounter_date.isoformat()
-        if encounter_date not in self._encounters_by_date:
-            raise KeyError(encounter_date)
-        return self._encounters_by_date[encounter_date]
+        if encounter_date in self._encounters_by_date:
+            return self._encounters_by_date[encounter_date]
+        encounter_date = encounter_date.replace('+00:00', '')
+        if encounter_date in self._encounters_by_date:
+            return self._encounters_by_date[encounter_date]
+        raise KeyError(encounter_date)
 
     def __iter__(self):
         return iter(self._encounters.values())

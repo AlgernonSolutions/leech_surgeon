@@ -1,5 +1,6 @@
 import logging
 
+import pytz
 import requests
 from algernon import ajson
 from retrying import retry
@@ -17,6 +18,11 @@ _url_stems = {
     'Encounter': '/visit/clientvisit_view.asp',
     'Versions': "/services/lookups_service.asmx/GetVisitDocVersions",
     'ViewVersions': '/visit/clientvisit_documentation_version_view.aspx'
+}
+
+_tz_map = {
+    'PSI': pytz.timezone('America/New_York'),
+    'ICFS': pytz.timezone('America/New_York')
 }
 
 
@@ -97,7 +103,7 @@ class CredibleFrontEndDriver:
         logging.debug(f'firing a command to url: {url} to process an advanced search: {data}')
         response = self._session.post(url, data=data, verify=False)
         logging.debug(f'received a response a command to url: {url} with data: {data}, response: {response.content}')
-        possible_objects = CredibleCsvParser.parse_csv_response(response.text)
+        possible_objects = CredibleCsvParser(self._id_source, _tz_map[self._id_source]).parse_csv_response(response.text)
         return possible_objects
 
     @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)

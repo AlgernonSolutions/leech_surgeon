@@ -4,6 +4,7 @@ from os import path
 from unittest.mock import MagicMock, patch
 
 import pytest
+import rapidjson
 import requests
 
 from toll_booth.obj import CredibleFrontEndDriver
@@ -20,6 +21,14 @@ def silence_x_ray():
 @pytest.fixture
 def stored_event_generator():
     return _read_test_event
+
+
+@pytest.fixture
+def sqs_event_generator():
+    def _generate_sqs_event(event_name):
+        stored_event = _read_test_event(event_name)
+        return {"Records": [{"body": rapidjson.dumps(stored_event)}]}
+    return _generate_sqs_event
 
 
 @pytest.fixture
@@ -103,7 +112,8 @@ def cheap_mock(*args):
 
 
 def _read_test_event(event_name):
-    with open(path.join('test_events', f'{event_name}.json')) as json_file:
+    user_home = path.expanduser('~')
+    with open(path.join(str(user_home), '.algernon', 'surgeon', f'{event_name}.json')) as json_file:
         event = json.load(json_file)
         return event
 

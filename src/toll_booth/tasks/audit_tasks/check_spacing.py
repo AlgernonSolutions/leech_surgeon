@@ -3,7 +3,8 @@ from toll_booth.obj.inspector import InspectionFinding
 
 def _check_spacing(check_type, test_encounter_id, other_encounters):
     results = []
-    threshold = 60 * 17
+    threshold_minutes = 17
+    threshold = 60 * threshold_minutes
     other_encounters = sorted(other_encounters, key=lambda x: x['Time In'])
     for pointer, encounter in enumerate(other_encounters):
         encounter_id = encounter['Service ID']
@@ -23,7 +24,11 @@ def _check_spacing(check_type, test_encounter_id, other_encounters):
                     previous_encounter_id = previous_encounter['Service ID']
                     msg = f'previous encounter for {check_type} ended too soon to the start of this encounter'
                     inspection_name = f'encounter_crowding_{check_type}_prior'
-                    inspection_details = {'previous_encounter_id': previous_encounter_id}
+                    inspection_details = {
+                        'previous_encounter_id': previous_encounter_id,
+                        'threshold_minutes': threshold_minutes,
+                        'found_spacing_minutes': spacing.seconds/60
+                    }
                     results.append(InspectionFinding(inspection_name, msg, inspection_details))
             if next_encounter:
                 next_encounter_time_in = next_encounter['Time In']
@@ -32,8 +37,12 @@ def _check_spacing(check_type, test_encounter_id, other_encounters):
                     next_encounter_id = next_encounter['Service ID']
                     msg = f'next encounter for {check_type} begins too soon to the end of this encounter'
                     inspection_name = f'encounter_crowding_{check_type}_next'
-                    inspection_details = {'next_encounter_id': next_encounter_id}
-                    results.append(InspectionFinding(inspection_name, msg,inspection_details))
+                    inspection_details = {
+                        'next_encounter_id': next_encounter_id,
+                        'threshold_minutes': threshold_minutes,
+                        'found_spacing_minutes': spacing.seconds/60
+                    }
+                    results.append(InspectionFinding(inspection_name, msg, inspection_details))
     return results
 
 
@@ -42,6 +51,7 @@ def check_encounter_spacing(**kwargs):
     other_encounters = kwargs['other_encounters']
     unapproved = kwargs['unapproved_encounters']
     encounter_date = test_encounter['Service Date']
+    encounter_id = test_encounter['Service ID']
     provider_id = test_encounter['Staff ID']
     patient_id = test_encounter['Consumer ID']
     try:
@@ -49,10 +59,12 @@ def check_encounter_spacing(**kwargs):
     except KeyError:
         same_day = []
     unapproved_same_day = unapproved.get_same_day_encounters_by_date(encounter_date)
-    provider_same_day = [x for x in same_day if x['Staff ID'] == provider_id]
-    patient_same_day = [x for x in same_day if x['Consumer ID'] == patient_id]
-    unapproved_provider_same_day = [x for x in unapproved_same_day if x['Staff ID'] == provider_id]
-    unapproved_patient_same_day = [x for x in unapproved_same_day if x['Consumer ID'] == patient_id]
+    provider_same_day = [x for x in same_day if x['Staff ID'] == provider_id and x['Service ID'] != encounter_id]
+    patient_same_day = [x for x in same_day if x['Consumer ID'] == patient_id and x['Service ID'] != encounter_id]
+    unapproved_provider_same_day = [
+        x for x in unapproved_same_day if x['Staff ID'] == provider_id and x['Service ID'] != encounter_id]
+    unapproved_patient_same_day = [
+        x for x in unapproved_same_day if x['Consumer ID'] == patient_id and x['Service ID'] != encounter_id]
     provider_same_day.extend(unapproved_provider_same_day)
     patient_same_day.extend(unapproved_patient_same_day)
     patient_check = _check_spacing('patient', test_encounter['Service ID'], patient_same_day)
